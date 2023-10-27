@@ -17,6 +17,8 @@ jobs:
           update: true
       - name: Install dependencies
         run: ./scripts/msys2-install-deps
+      - name: ls
+        run: ls -alR
       - name: Show version
         run: python -m borgmatic.commands.borgmatic:main --version
       - name: Generate config
