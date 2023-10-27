@@ -20,8 +20,8 @@ jobs:
       - name: ls
         run: ls -alR
       - name: Show version
-        run: python -m borgmatic.commands.borgmatic:main --version
+        run: borgmatic --version
       - name: Generate config
-        run: python -m borgmatic.commands.generate_config:main
+        run: generate-borgmatic-config
       - name: Validate config
-        run: python -m borgmatic.commands.validate_config:main
+        run: validate-borgmatic-config
