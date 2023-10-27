@@ -23,11 +23,3 @@ jobs:
         run: python -m borgmatic.commands.generate_config:main
       - name: Validate config
         run: python -m borgmatic.commands.validate_config:main
-      # - name: Build
-      #   run: ./scripts/msys2-build
-      # - name: Test
-      #   run: ./dist/borg.exe -V
-      # - uses: actions/upload-artifact@v3
-      #   with:
-      #     name: borg-windows
-      #     path: dist/borg.exe
