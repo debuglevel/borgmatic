@@ -24,7 +24,7 @@ jobs:
       - name: Validate config
         run: validate-borgmatic-config
 
-  msys2-ucrt64:
+  msys2-clang64:
     runs-on: windows-latest
     defaults:
       run:
