@@ -2,4 +2,4 @@
 
 pacman -S --needed --noconfirm git mingw-w64-ucrt-x86_64-{python,python-pkgconfig,python-pip}
 #pip install pyinstaller
-pip install .
+SETUPTOOLS_USE_DISTUTILS=stdlib pip install .
