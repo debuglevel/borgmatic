@@ -1,5 +1,6 @@
 #!/bin/bash
 
-pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-{toolchain,python,python-pip}
+environment=$1
+pacman -S --needed --noconfirm mingw-w64-$environment-x86_64-{toolchain,python,python-pip}
 #pip install pyinstaller
 SETUPTOOLS_USE_DISTUTILS=stdlib pip install .

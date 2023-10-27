@@ -16,7 +16,29 @@ jobs:
           msystem: UCRT64
           update: true
       - name: Install dependencies
-        run: ./scripts/msys2-install-deps
+        run: ./scripts/msys2-install-deps ucrt
+      - name: Show version
+        run: borgmatic --version
+      - name: Generate config
+        run: generate-borgmatic-config
+      - name: Validate config
+        run: validate-borgmatic-config
+
+  msys2-ucrt64:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: true
+      - name: Install dependencies
+        run: ./scripts/msys2-install-deps clang
       - name: Show version
         run: borgmatic --version
       - name: Generate config
