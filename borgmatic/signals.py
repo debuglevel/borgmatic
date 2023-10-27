@@ -33,7 +33,7 @@ def configure_signals():
     like Borg.
     '''
     for signal_number in (
-        signal.SIGHUP,
+        #signal.SIGHUP,  # Not available on Python Windows
         signal.SIGINT,
         signal.SIGTERM,
         signal.SIGUSR1,
