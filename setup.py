@@ -30,7 +30,7 @@ setup(
     obsoletes=['atticmatic'],
     install_requires=(
         'colorama>=0.4.1,<0.5',
-        'jsonschema',
+        'jsonschema<4.18',
         'packaging',
         'requests',
         'ruamel.yaml>0.15.0,<0.18.0',
