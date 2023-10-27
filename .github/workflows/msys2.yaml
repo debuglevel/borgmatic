@@ -17,8 +17,14 @@ jobs:
           update: true
       - name: Install dependencies
         run: ./scripts/msys2-install-deps
-      - name: Build
-        run: ./scripts/msys2-build
+      - name: Show version
+        run: python -m borgmatic.commands.borgmatic:main --version
+      - name: Generate config
+        run: python -m borgmatic.commands.generate_config:main
+      - name: Validate config
+        run: python -m borgmatic.commands.validate_config:main
+      # - name: Build
+      #   run: ./scripts/msys2-build
       # - name: Test
       #   run: ./dist/borg.exe -V
       # - uses: actions/upload-artifact@v3
