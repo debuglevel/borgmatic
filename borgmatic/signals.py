@@ -36,7 +36,7 @@ def configure_signals():
         #signal.SIGHUP,  # Not available on Python Windows
         signal.SIGINT,
         signal.SIGTERM,
-        signal.SIGUSR1,
-        signal.SIGUSR2,
+        #signal.SIGUSR1,  # Not available on Python Windows
+        #signal.SIGUSR2,  # Not available on Python Windows
     ):
         signal.signal(signal_number, handle_signal)
