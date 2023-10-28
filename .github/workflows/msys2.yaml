@@ -49,17 +49,17 @@ jobs:
         # run: cat /etc/borgmatic/config.yaml
         run: cat /tmp/borgmatic.yaml
       - name: borgmatic init
-        run: borgmatic init --encryption repokey
+        run: borgmatic init --config /tmp/borgmatic.yaml --encryption repokey
       - name: borgmatic create
-        run: borgmatic create
+        run: borgmatic create --config /tmp/borgmatic.yaml
       - name: borgmatic info
-        run: borgmatic info
+        run: borgmatic info --config /tmp/borgmatic.yaml
       - name: borgmatic rinfo
-        run: borgmatic rinfo
+        run: borgmatic rinfo --config /tmp/borgmatic.yaml
       - name: borgmatic list
-        run: borgmatic list
+        run: borgmatic list --config /tmp/borgmatic.yaml
       - name: borgmatic rlist
-        run: borgmatic rlist
+        run: borgmatic rlist --config /tmp/borgmatic.yaml
 
   # msys2-clang64:
   #   runs-on: windows-latest
