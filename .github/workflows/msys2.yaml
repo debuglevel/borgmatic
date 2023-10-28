@@ -42,7 +42,7 @@ jobs:
 
       # test borgmatic
       - name: edit config 1
-        run: sed -i '/label: backupserver/d' /tmp/borgmatic.yaml
+        run: sed -i '/backupserver/d' /tmp/borgmatic.yaml
       - name: edit config 2
         run: sed -i '/sourcehostname.borg/d' /tmp/borgmatic.yaml
       - name: borgmatic init
