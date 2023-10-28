@@ -22,11 +22,14 @@ jobs:
       - name: Show borgmatic version
         run: borgmatic --version
       - name: Generate borgmatic config
-        run: borgmatic config generate
-      - name: ls -alR /etc
-        run: ls -alR /etc
+        run: borgmatic config generate --destination /tmp/borgmatic.yaml
+      # - name: ls -alR /etc
+      #   run: ls -alR /etc
+      - name: ls -alR /tmp
+        run: ls -alR /tmp
       - name: Show borgmatic config
-        run: cat /etc/borgmatic/config.yaml
+        #run: cat /etc/borgmatic/config.yaml
+        run: cat /tmp/borgmatic.yaml
       - name: Validate borgmatic config
         run: borgmatic config validate
 
