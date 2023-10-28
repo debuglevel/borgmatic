@@ -15,6 +15,8 @@ jobs:
         with:
           msystem: UCRT64
           update: true
+
+      # borgmatic
       - name: Install dependencies
         run: ./scripts/msys2-install-deps ucrt
       - name: Show version
@@ -23,6 +25,13 @@ jobs:
         run: generate-borgmatic-config
       - name: Validate config
         run: validate-borgmatic-config
+
+      # borg
+      - name: Install borg
+        run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup
+      - name: Install borg
+        run: borg --version
+
 
   # msys2-clang64:
   #   runs-on: windows-latest
