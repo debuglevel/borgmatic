@@ -45,8 +45,11 @@ jobs:
         run: sed -i '/backupserver/d' /tmp/borgmatic.yaml
       - name: edit config 2
         run: sed -i '/sourcehostname.borg/d' /tmp/borgmatic.yaml
+      - name: Show borgmatic config after edit
+        # run: cat /etc/borgmatic/config.yaml
+        run: cat /tmp/borgmatic.yaml
       - name: borgmatic init
-        run: borgmatic init
+        run: borgmatic init --encryption repokey
       - name: borgmatic create
         run: borgmatic create
       - name: borgmatic info
