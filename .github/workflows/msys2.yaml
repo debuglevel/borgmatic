@@ -22,11 +22,13 @@ jobs:
       - name: Show borgmatic version
         run: borgmatic --version
       - name: Generate borgmatic config
-        run: generate-borgmatic-config
+        run: borgmatic config generate
+      - name: ls -alR /etc
+        run: ls -alR /etc
       - name: Show borgmatic config
         run: cat /etc/borgmatic/config.yaml
       - name: Validate borgmatic config
-        run: validate-borgmatic-config
+        run: borgmatic config validate
 
       # borg
       - name: Install borg
@@ -34,6 +36,20 @@ jobs:
       - name: Show borg version
         run: borg --version
 
+
+      # test borgmatic
+      - name: borgmatic init
+        run: borgmatic init
+      - name: borgmatic create
+        run: borgmatic create
+      - name: borgmatic info
+        run: borgmatic info
+      - name: borgmatic rinfo
+        run: borgmatic rinfo
+      - name: borgmatic list
+        run: borgmatic list
+      - name: borgmatic rlist
+        run: borgmatic rlist
 
   # msys2-clang64:
   #   runs-on: windows-latest
