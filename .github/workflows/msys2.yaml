@@ -22,16 +22,17 @@ jobs:
       - name: Show borgmatic version
         run: borgmatic --version
       - name: Generate borgmatic config
+        # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
         run: borgmatic config generate --destination /tmp/borgmatic.yaml
       # - name: ls -alR /etc
       #   run: ls -alR /etc
       - name: ls -alR /tmp
         run: ls -alR /tmp
       - name: Show borgmatic config
-        #run: cat /etc/borgmatic/config.yaml
+        # run: cat /etc/borgmatic/config.yaml
         run: cat /tmp/borgmatic.yaml
       - name: Validate borgmatic config
-        run: borgmatic config validate
+        run: borgmatic config validate --config /tmp/borgmatic.yaml
 
       # borg
       - name: Install borg
@@ -39,8 +40,11 @@ jobs:
       - name: Show borg version
         run: borg --version
 
-
       # test borgmatic
+      - name: edit config 1
+        run: sed -i '/label: backupserver/d' /tmp/borgmatic.yaml
+      - name: edit config 2
+        run: sed -i '/sourcehostname.borg/d' /tmp/borgmatic.yaml
       - name: borgmatic init
         run: borgmatic init
       - name: borgmatic create
