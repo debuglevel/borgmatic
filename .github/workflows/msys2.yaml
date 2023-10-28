@@ -48,8 +48,8 @@ jobs:
       - name: Show borgmatic config after edit
         # run: cat /etc/borgmatic/config.yaml
         run: cat /tmp/borgmatic.yaml
-      - name: mkdir /mnt/backup
-        run: mkdir /mnt/backup
+      - name: mkdir -p /mnt/backup
+        run: mkdir -p /mnt/backup
       - name: ls -alR /mnt/
         run: ls -alR /mnt/
       - name: borgmatic init
