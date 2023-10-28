@@ -17,19 +17,21 @@ jobs:
           update: true
 
       # borgmatic
-      - name: Install dependencies
+      - name: Install borgmatic dependencies
         run: ./scripts/msys2-install-deps ucrt
-      - name: Show version
+      - name: Show borgmatic version
         run: borgmatic --version
-      - name: Generate config
+      - name: Generate borgmatic config
         run: generate-borgmatic-config
-      - name: Validate config
+      - name: Show borgmatic config
+        run: cat /etc/borgmatic/config.yaml
+      - name: Validate borgmatic config
         run: validate-borgmatic-config
 
       # borg
       - name: Install borg
         run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup
-      - name: Install borg
+      - name: Show borg version
         run: borg --version
 
 
