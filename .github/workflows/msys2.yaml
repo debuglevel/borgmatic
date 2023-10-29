@@ -50,11 +50,12 @@ jobs:
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
           sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
+          sed -i '#/mnt/backup#/tmp/backup#' /tmp/borg/borgmatic.yaml
           cat /tmp/borg/borgmatic.yaml
       - name: Create repository directory
         run: |
-          mkdir -p /mnt/backup
-          ls -alR /mnt/
+          mkdir -p /tmp/backup
+          ls -alR /tmp/
 
       - name: borgmatic init
         run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey
@@ -123,11 +124,12 @@ jobs:
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
           sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
+          sed -i '#/mnt/backup#/tmp/backup#' /tmp/borg/borgmatic.yaml
           cat /tmp/borg/borgmatic.yaml
       - name: Create repository directory
         run: |
-          mkdir -p /mnt/backup
-          ls -alR /mnt/
+          mkdir -p /tmp/backup
+          ls -alR /tmp/
 
       - name: borgmatic init
         run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey
