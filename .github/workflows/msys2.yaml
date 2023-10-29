@@ -46,16 +46,16 @@ jobs:
         run: borg --version
 
       # test borgmatic
-      - name: edit config 1
-        run: sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
-      - name: edit config 2
-        run: sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
-      - name: Show borgmatic config after edit
-        run: cat /tmp/borg/borgmatic.yaml
-      - name: mkdir -p /mnt/backup
-        run: mkdir -p /mnt/backup
-      - name: ls -alR /mnt/
-        run: ls -alR /mnt/
+      - name: Edit config
+        run: |
+          sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
+          sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
+          cat /tmp/borg/borgmatic.yaml
+      - name: Create repository directory
+        run: |
+          mkdir -p /mnt/backup
+          ls -alR /mnt/
+
       - name: borgmatic init
         run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey
       - name: borgmatic create
@@ -93,6 +93,24 @@ jobs:
       - name: Print versions
         run: python --version
 
+      # borgmatic
+      - name: Install borgmatic
+        run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install .
+      - name: Show borgmatic version
+        run: borgmatic --version
+
+      - name: mkdir /tmp/borg
+        run: mkdir /tmp/borg
+        # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
+      - name: Generate borgmatic config
+        run: borgmatic config generate --destination /tmp/borg/borgmatic.yaml
+      - name: ls -alR /tmp/borg
+        run: ls -alR /tmp/borg
+      - name: Show borgmatic config
+        run: cat /tmp/borg/borgmatic.yaml
+      - name: Validate borgmatic config
+        run: borgmatic config validate --config /tmp/borg/borgmatic.yaml
+
       # borg
       - name: Install borg
         #run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup==1.2.6
@@ -101,16 +119,16 @@ jobs:
         run: borg --version
 
       # test borgmatic
-      - name: edit config 1
-        run: sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
-      - name: edit config 2
-        run: sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
-      - name: Show borgmatic config after edit
-        run: cat /tmp/borg/borgmatic.yaml
-      - name: mkdir -p /mnt/backup
-        run: mkdir -p /mnt/backup
-      - name: ls -alR /mnt/
-        run: ls -alR /mnt/
+      - name: Edit config
+        run: |
+          sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
+          sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
+          cat /tmp/borg/borgmatic.yaml
+      - name: Create repository directory
+        run: |
+          mkdir -p /mnt/backup
+          ls -alR /mnt/
+
       - name: borgmatic init
         run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey
       - name: borgmatic create
