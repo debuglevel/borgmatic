@@ -96,7 +96,7 @@ jobs:
 
       # borg
       - name: Install borg
-        run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup
+        run: pip install borgbackup
       - name: Show borg version
         run: borg --version
 
