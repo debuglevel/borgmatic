@@ -55,7 +55,7 @@ jobs:
       - name: Create repository directory
         run: |
           mkdir -p /tmp/backup
-          ls -alR /tmp/
+          ls -alR /tmp/backup
 
       - name: borgmatic init
         run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey
@@ -129,7 +129,7 @@ jobs:
       - name: Create repository directory
         run: |
           mkdir -p /tmp/backup
-          ls -alR /tmp/
+          ls -alR /tmp/backup
 
       - name: borgmatic init
         run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey
