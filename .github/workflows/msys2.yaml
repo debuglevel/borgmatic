@@ -50,6 +50,8 @@ jobs:
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
           sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
+          sed -i '#- /home#d' /tmp/borg/borgmatic.yaml
+          sed -i '#- /var/log/syslog#d' /tmp/borg/borgmatic.yaml
           sed -i 's#/mnt/backup#/tmp/backup##' /tmp/borg/borgmatic.yaml
           echo "encryption_passphrase: PASS" >> /tmp/borg/borgmatic.yaml
           cat /tmp/borg/borgmatic.yaml
@@ -125,6 +127,8 @@ jobs:
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
           sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
+          sed -i '#- /home#d' /tmp/borg/borgmatic.yaml
+          sed -i '#- /var/log/syslog#d' /tmp/borg/borgmatic.yaml
           sed -i 's#/mnt/backup#/tmp/backup##' /tmp/borg/borgmatic.yaml
           echo "encryption_passphrase: PASS" >> /tmp/borg/borgmatic.yaml
           cat /tmp/borg/borgmatic.yaml
