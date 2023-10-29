@@ -18,7 +18,7 @@ jobs:
 
       # borgmatic
       - name: Install borgmatic dependencies
-        run: ./scripts/msys2-install-deps ucrt
+        run: bash ./scripts/msys2-install-deps ucrt
       - name: Show borgmatic version
         run: borgmatic --version
       - name: Generate borgmatic config
@@ -74,7 +74,7 @@ jobs:
 
       # borgmatic
       - name: Install borgmatic dependencies
-        run: ./scripts/msys2-install-deps ucrt
+        run: bash ./scripts/msys2-install-deps ucrt
       - name: Show borgmatic version
         run: borgmatic --version
       - name: Generate borgmatic config
