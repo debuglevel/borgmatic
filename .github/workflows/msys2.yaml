@@ -50,7 +50,7 @@ jobs:
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
           sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
-          sed -i '#/mnt/backup#/tmp/backup##' /tmp/borg/borgmatic.yaml
+          sed -i 's#/mnt/backup#/tmp/backup##' /tmp/borg/borgmatic.yaml
           cat /tmp/borg/borgmatic.yaml
       - name: Create repository directory
         run: |
@@ -124,7 +124,7 @@ jobs:
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
           sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
-          sed -i '#/mnt/backup#/tmp/backup##' /tmp/borg/borgmatic.yaml
+          sed -i 's#/mnt/backup#/tmp/backup##' /tmp/borg/borgmatic.yaml
           cat /tmp/borg/borgmatic.yaml
       - name: Create repository directory
         run: |
