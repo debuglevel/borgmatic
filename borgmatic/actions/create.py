@@ -1,12 +1,9 @@
+import importlib.metadata
 import json
 import logging
 import os
 
-try:
-    import importlib_metadata
-except ModuleNotFoundError:  # pragma: nocover
-    import importlib.metadata as importlib_metadata
-
+import borgmatic.actions.json
 import borgmatic.borg.create
 import borgmatic.borg.state
 import borgmatic.config.validate
@@ -39,7 +36,7 @@ def create_borgmatic_manifest(config, config_paths, dry_run):
     with open(borgmatic_manifest_path, 'w') as config_list_file:
         json.dump(
             {
-                'borgmatic_version': importlib_metadata.version('borgmatic'),
+                'borgmatic_version': importlib.metadata.version('borgmatic'),
                 'config_paths': config_paths,
             },
             config_list_file,
@@ -111,8 +108,8 @@ def run_create(
         list_files=create_arguments.list_files,
         stream_processes=stream_processes,
     )
-    if json_output:  # pragma: nocover
-        yield json.loads(json_output)
+    if json_output:
+        yield borgmatic.actions.json.parse_json(json_output, repository.get('label'))
 
     borgmatic.hooks.dispatch.call_hooks_even_if_unconfigured(
         'remove_data_source_dumps',

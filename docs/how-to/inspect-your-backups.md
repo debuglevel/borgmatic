@@ -116,26 +116,29 @@ archive, complete with file sizes.
 
 ## Logging
 
-By default, borgmatic logs to a local syslog-compatible daemon if one is
-present and borgmatic is running in a non-interactive console. Where those
-logs show up depends on your particular system. If you're using systemd, try
-running `journalctl -xe`. Otherwise, try viewing `/var/log/syslog` or
-similar.
-
-You can customize the log level used for syslog logging with the
-`--syslog-verbosity` flag, and this is independent from the console logging
-`--verbosity` flag described above. For instance, to get additional
-information about the progress of the backup as it proceeds:
+By default, borgmatic logs to the console. You can enable simultaneous syslog
+logging and customize its log level with the `--syslog-verbosity` flag, which
+is independent from the console logging `--verbosity` flag described above.
+For instance, to enable syslog logging, run:
 
 ```bash
 borgmatic --syslog-verbosity 1
 ```
 
-Or to increase syslog logging to include debug spew:
+To increase syslog logging further to include debugging information, run:
 
 ```bash
 borgmatic --syslog-verbosity 2
 ```
+
+See above for further details about the verbosity levels.
+
+Where these logs show up depends on your particular system. If you're using
+systemd, try running `journalctl -xe`. Otherwise, try viewing
+`/var/log/syslog` or similar.
+
+<span class="minilink minilink-addedin">Prior to version 1.8.3</span>borgmatic
+logged to syslog by default whenever run at a non-interactive console.
 
 ### Rate limiting
 
@@ -165,7 +168,7 @@ Note that if you use the `--log-file` flag, you are responsible for rotating
 the log file so it doesn't grow too large, for example with
 [logrotate](https://wiki.archlinux.org/index.php/Logrotate).
 
-You can the `--log-file-verbosity` flag to customize the log file's log level:
+You can use the `--log-file-verbosity` flag to customize the log file's log level:
 
 ```bash
 borgmatic --log-file /path/to/file.log --log-file-verbosity 2
@@ -197,5 +200,5 @@ See the [Python logging
 documentation](https://docs.python.org/3/library/logging.html#logrecord-attributes)
 for additional placeholders.
 
-Note that this `--log-file-format` flg only applies to the specified
+Note that this `--log-file-format` flag only applies to the specified
 `--log-file` and not to syslog or other logging.

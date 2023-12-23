@@ -39,7 +39,11 @@ def parse_checks(config, only_checks=None):
         check_config['name'] for check_config in (config.get('checks', None) or DEFAULT_CHECKS)
     )
     checks = tuple(check.lower() for check in checks)
+
     if 'disabled' in checks:
+        logger.warning(
+            'The "disabled" value for the "checks" option is deprecated and will be removed from a future release; use "skip_actions" instead'
+        )
         if len(checks) > 1:
             logger.warning(
                 'Multiple checks are configured, but one of them is "disabled"; not running any checks'
@@ -119,6 +123,9 @@ def filter_checks_on_frequency(
 
     Raise ValueError if a frequency cannot be parsed.
     '''
+    if not checks:
+        return checks
+
     filtered_checks = list(checks)
 
     if force:
@@ -149,11 +156,13 @@ def filter_checks_on_frequency(
     return tuple(filtered_checks)
 
 
-def make_archive_filter_flags(local_borg_version, config, checks, check_last=None, prefix=None):
+def make_archive_filter_flags(
+    local_borg_version, config, checks, check_arguments, check_last=None, prefix=None
+):
     '''
-    Given the local Borg version, a configuration dict, a parsed sequence of checks, the check last
-    value, and a consistency check prefix, transform the checks into tuple of command-line flags for
-    filtering archives in a check command.
+    Given the local Borg version, a configuration dict, a parsed sequence of checks, check arguments
+    as an argparse.Namespace instance, the check last value, and a consistency check prefix,
+    transform the checks into tuple of command-line flags for filtering archives in a check command.
 
     If a check_last value is given and "archives" is in checks, then include a "--last" flag. And if
     a prefix value is given and "archives" is in checks, then include a "--match-archives" flag.
@@ -168,7 +177,7 @@ def make_archive_filter_flags(local_borg_version, config, checks, check_last=Non
             if prefix
             else (
                 flags.make_match_archives_flags(
-                    config.get('match_archives'),
+                    check_arguments.match_archives or config.get('match_archives'),
                     config.get('archive_name_format'),
                     local_borg_version,
                 )
@@ -353,18 +362,15 @@ def check_archives(
     repository_path,
     config,
     local_borg_version,
+    check_arguments,
     global_arguments,
     local_path='borg',
     remote_path=None,
-    progress=None,
-    repair=None,
-    only_checks=None,
-    force=None,
 ):
     '''
-    Given a local or remote repository path, a configuration dict, local/remote commands to run,
-    whether to include progress information, whether to attempt a repair, and an optional list of
-    checks to use instead of configured checks, check the contained Borg archives for consistency.
+    Given a local or remote repository path, a configuration dict, the local Borg version, check
+    arguments as an argparse.Namespace instance, global arguments, and local/remote commands to run,
+    check the contained Borg archives for consistency.
 
     If there are no consistency checks to run, skip running them.
 
@@ -389,11 +395,11 @@ def check_archives(
 
     check_last = config.get('check_last', None)
     prefix = config.get('prefix')
-    configured_checks = parse_checks(config, only_checks)
+    configured_checks = parse_checks(config, check_arguments.only_checks)
     lock_wait = None
     extra_borg_options = config.get('extra_borg_options', {}).get('check', '')
     archive_filter_flags = make_archive_filter_flags(
-        local_borg_version, config, configured_checks, check_last, prefix
+        local_borg_version, config, configured_checks, check_arguments, check_last, prefix
     )
     archives_check_id = make_archives_check_id(archive_filter_flags)
 
@@ -401,7 +407,7 @@ def check_archives(
         config,
         borg_repository_id,
         configured_checks,
-        force,
+        check_arguments.force,
         archives_check_id,
     )
 
@@ -416,13 +422,13 @@ def check_archives(
 
         full_command = (
             (local_path, 'check')
-            + (('--repair',) if repair else ())
+            + (('--repair',) if check_arguments.repair else ())
             + make_check_flags(checks, archive_filter_flags)
             + (('--remote-path', remote_path) if remote_path else ())
             + (('--log-json',) if global_arguments.log_json else ())
             + (('--lock-wait', str(lock_wait)) if lock_wait else ())
             + verbosity_flags
-            + (('--progress',) if progress else ())
+            + (('--progress',) if check_arguments.progress else ())
             + (tuple(extra_borg_options.split(' ')) if extra_borg_options else ())
             + flags.make_repository_flags(repository_path, local_borg_version)
         )
@@ -431,7 +437,7 @@ def check_archives(
 
         # The Borg repair option triggers an interactive prompt, which won't work when output is
         # captured. And progress messes with the terminal directly.
-        if repair or progress:
+        if check_arguments.repair or check_arguments.progress:
             execute_command(
                 full_command, output_file=DO_NOT_CAPTURE, extra_environment=borg_environment
             )

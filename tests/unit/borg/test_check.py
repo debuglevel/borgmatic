@@ -193,6 +193,19 @@ def test_filter_checks_on_frequency_restains_check_with_unelapsed_frequency_and_
     ) == ('archives',)
 
 
+def test_filter_checks_on_frequency_passes_through_empty_checks():
+    assert (
+        module.filter_checks_on_frequency(
+            config={'checks': [{'name': 'archives', 'frequency': '1 hour'}]},
+            borg_repository_id='repo',
+            checks=(),
+            force=False,
+            archives_check_id='1234',
+        )
+        == ()
+    )
+
+
 def test_make_archive_filter_flags_with_default_checks_and_prefix_returns_default_flags():
     flexmock(module.feature).should_receive('available').and_return(True)
     flexmock(module.flags).should_receive('make_match_archives_flags').and_return(())
@@ -201,6 +214,7 @@ def test_make_archive_filter_flags_with_default_checks_and_prefix_returns_defaul
         '1.2.3',
         {},
         ('repository', 'archives'),
+        check_arguments=flexmock(match_archives=None),
         prefix='foo',
     )
 
@@ -215,6 +229,7 @@ def test_make_archive_filter_flags_with_all_checks_and_prefix_returns_default_fl
         '1.2.3',
         {},
         ('repository', 'archives', 'extract'),
+        check_arguments=flexmock(match_archives=None),
         prefix='foo',
     )
 
@@ -229,6 +244,7 @@ def test_make_archive_filter_flags_with_all_checks_and_prefix_without_borg_featu
         '1.2.3',
         {},
         ('repository', 'archives', 'extract'),
+        check_arguments=flexmock(match_archives=None),
         prefix='foo',
     )
 
@@ -239,7 +255,9 @@ def test_make_archive_filter_flags_with_archives_check_and_last_includes_last_fl
     flexmock(module.feature).should_receive('available').and_return(True)
     flexmock(module.flags).should_receive('make_match_archives_flags').and_return(())
 
-    flags = module.make_archive_filter_flags('1.2.3', {}, ('archives',), check_last=3)
+    flags = module.make_archive_filter_flags(
+        '1.2.3', {}, ('archives',), check_arguments=flexmock(match_archives=None), check_last=3
+    )
 
     assert flags == ('--last', '3')
 
@@ -248,7 +266,9 @@ def test_make_archive_filter_flags_with_data_check_and_last_includes_last_flag()
     flexmock(module.feature).should_receive('available').and_return(True)
     flexmock(module.flags).should_receive('make_match_archives_flags').and_return(())
 
-    flags = module.make_archive_filter_flags('1.2.3', {}, ('data',), check_last=3)
+    flags = module.make_archive_filter_flags(
+        '1.2.3', {}, ('data',), check_arguments=flexmock(match_archives=None), check_last=3
+    )
 
     assert flags == ('--last', '3')
 
@@ -257,7 +277,9 @@ def test_make_archive_filter_flags_with_repository_check_and_last_omits_last_fla
     flexmock(module.feature).should_receive('available').and_return(True)
     flexmock(module.flags).should_receive('make_match_archives_flags').and_return(())
 
-    flags = module.make_archive_filter_flags('1.2.3', {}, ('repository',), check_last=3)
+    flags = module.make_archive_filter_flags(
+        '1.2.3', {}, ('repository',), check_arguments=flexmock(match_archives=None), check_last=3
+    )
 
     assert flags == ()
 
@@ -266,7 +288,13 @@ def test_make_archive_filter_flags_with_default_checks_and_last_includes_last_fl
     flexmock(module.feature).should_receive('available').and_return(True)
     flexmock(module.flags).should_receive('make_match_archives_flags').and_return(())
 
-    flags = module.make_archive_filter_flags('1.2.3', {}, ('repository', 'archives'), check_last=3)
+    flags = module.make_archive_filter_flags(
+        '1.2.3',
+        {},
+        ('repository', 'archives'),
+        check_arguments=flexmock(match_archives=None),
+        check_last=3,
+    )
 
     assert flags == ('--last', '3')
 
@@ -275,7 +303,9 @@ def test_make_archive_filter_flags_with_archives_check_and_prefix_includes_match
     flexmock(module.feature).should_receive('available').and_return(True)
     flexmock(module.flags).should_receive('make_match_archives_flags').and_return(())
 
-    flags = module.make_archive_filter_flags('1.2.3', {}, ('archives',), prefix='foo-')
+    flags = module.make_archive_filter_flags(
+        '1.2.3', {}, ('archives',), check_arguments=flexmock(match_archives=None), prefix='foo-'
+    )
 
     assert flags == ('--match-archives', 'sh:foo-*')
 
@@ -284,9 +314,28 @@ def test_make_archive_filter_flags_with_data_check_and_prefix_includes_match_arc
     flexmock(module.feature).should_receive('available').and_return(True)
     flexmock(module.flags).should_receive('make_match_archives_flags').and_return(())
 
-    flags = module.make_archive_filter_flags('1.2.3', {}, ('data',), prefix='foo-')
+    flags = module.make_archive_filter_flags(
+        '1.2.3', {}, ('data',), check_arguments=flexmock(match_archives=None), prefix='foo-'
+    )
 
     assert flags == ('--match-archives', 'sh:foo-*')
+
+
+def test_make_archive_filter_flags_prefers_check_arguments_match_archives_to_config_match_archives():
+    flexmock(module.feature).should_receive('available').and_return(True)
+    flexmock(module.flags).should_receive('make_match_archives_flags').with_args(
+        'baz-*', None, '1.2.3'
+    ).and_return(('--match-archives', 'sh:baz-*'))
+
+    flags = module.make_archive_filter_flags(
+        '1.2.3',
+        {'match_archives': 'bar-{now}'},  # noqa: FS003
+        ('archives',),
+        check_arguments=flexmock(match_archives='baz-*'),
+        prefix='',
+    )
+
+    assert flags == ('--match-archives', 'sh:baz-*')
 
 
 def test_make_archive_filter_flags_with_archives_check_and_empty_prefix_uses_archive_name_format_instead():
@@ -296,7 +345,11 @@ def test_make_archive_filter_flags_with_archives_check_and_empty_prefix_uses_arc
     ).and_return(('--match-archives', 'sh:bar-*'))
 
     flags = module.make_archive_filter_flags(
-        '1.2.3', {'archive_name_format': 'bar-{now}'}, ('archives',), prefix=''  # noqa: FS003
+        '1.2.3',
+        {'archive_name_format': 'bar-{now}'},  # noqa: FS003
+        ('archives',),
+        check_arguments=flexmock(match_archives=None),
+        prefix='',
     )
 
     assert flags == ('--match-archives', 'sh:bar-*')
@@ -306,7 +359,9 @@ def test_make_archive_filter_flags_with_archives_check_and_none_prefix_omits_mat
     flexmock(module.feature).should_receive('available').and_return(True)
     flexmock(module.flags).should_receive('make_match_archives_flags').and_return(())
 
-    flags = module.make_archive_filter_flags('1.2.3', {}, ('archives',), prefix=None)
+    flags = module.make_archive_filter_flags(
+        '1.2.3', {}, ('archives',), check_arguments=flexmock(match_archives=None), prefix=None
+    )
 
     assert flags == ()
 
@@ -315,7 +370,9 @@ def test_make_archive_filter_flags_with_repository_check_and_prefix_omits_match_
     flexmock(module.feature).should_receive('available').and_return(True)
     flexmock(module.flags).should_receive('make_match_archives_flags').and_return(())
 
-    flags = module.make_archive_filter_flags('1.2.3', {}, ('repository',), prefix='foo-')
+    flags = module.make_archive_filter_flags(
+        '1.2.3', {}, ('repository',), check_arguments=flexmock(match_archives=None), prefix='foo-'
+    )
 
     assert flags == ()
 
@@ -324,7 +381,13 @@ def test_make_archive_filter_flags_with_default_checks_and_prefix_includes_match
     flexmock(module.feature).should_receive('available').and_return(True)
     flexmock(module.flags).should_receive('make_match_archives_flags').and_return(())
 
-    flags = module.make_archive_filter_flags('1.2.3', {}, ('repository', 'archives'), prefix='foo-')
+    flags = module.make_archive_filter_flags(
+        '1.2.3',
+        {},
+        ('repository', 'archives'),
+        check_arguments=flexmock(match_archives=None),
+        prefix='foo-',
+    )
 
     assert flags == ('--match-archives', 'sh:foo-*')
 
@@ -607,7 +670,7 @@ def test_upgrade_check_times_renames_stale_temporary_check_path():
     module.upgrade_check_times(flexmock(), flexmock())
 
 
-def test_check_archives_with_progress_calls_borg_with_progress_parameter():
+def test_check_archives_with_progress_passes_through_to_borg():
     checks = ('repository',)
     config = {'check_last': None}
     flexmock(module.rinfo).should_receive('display_repository_info').and_return(
@@ -634,12 +697,14 @@ def test_check_archives_with_progress_calls_borg_with_progress_parameter():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=True, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
-        progress=True,
     )
 
 
-def test_check_archives_with_repair_calls_borg_with_repair_parameter():
+def test_check_archives_with_repair_passes_through_to_borg():
     checks = ('repository',)
     config = {'check_last': None}
     flexmock(module.rinfo).should_receive('display_repository_info').and_return(
@@ -666,8 +731,10 @@ def test_check_archives_with_repair_calls_borg_with_repair_parameter():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=True, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
-        repair=True,
     )
 
 
@@ -701,6 +768,9 @@ def test_check_archives_calls_borg_with_parameters(checks):
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
     )
 
@@ -723,6 +793,9 @@ def test_check_archives_with_json_error_raises():
             repository_path='repo',
             config=config,
             local_borg_version='1.2.3',
+            check_arguments=flexmock(
+                progress=None, repair=None, only_checks=None, force=None, match_archives=None
+            ),
             global_arguments=flexmock(log_json=False),
         )
 
@@ -743,6 +816,9 @@ def test_check_archives_with_missing_json_keys_raises():
             repository_path='repo',
             config=config,
             local_borg_version='1.2.3',
+            check_arguments=flexmock(
+                progress=None, repair=None, only_checks=None, force=None, match_archives=None
+            ),
             global_arguments=flexmock(log_json=False),
         )
 
@@ -769,11 +845,14 @@ def test_check_archives_with_extract_check_calls_extract_only():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
     )
 
 
-def test_check_archives_with_log_info_calls_borg_with_info_parameter():
+def test_check_archives_with_log_info_passes_through_to_borg():
     checks = ('repository',)
     config = {'check_last': None}
     flexmock(module.rinfo).should_receive('display_repository_info').and_return(
@@ -795,11 +874,14 @@ def test_check_archives_with_log_info_calls_borg_with_info_parameter():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
     )
 
 
-def test_check_archives_with_log_debug_calls_borg_with_debug_parameter():
+def test_check_archives_with_log_debug_passes_through_to_borg():
     checks = ('repository',)
     config = {'check_last': None}
     flexmock(module.rinfo).should_receive('display_repository_info').and_return(
@@ -821,6 +903,9 @@ def test_check_archives_with_log_debug_calls_borg_with_debug_parameter():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
     )
 
@@ -841,6 +926,9 @@ def test_check_archives_without_any_checks_bails():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
     )
 
@@ -867,12 +955,15 @@ def test_check_archives_with_local_path_calls_borg_via_local_path():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
         local_path='borg1',
     )
 
 
-def test_check_archives_with_remote_path_calls_borg_with_remote_path_parameters():
+def test_check_archives_with_remote_path_passes_through_to_borg():
     checks = ('repository',)
     check_last = flexmock()
     config = {'check_last': check_last}
@@ -894,12 +985,15 @@ def test_check_archives_with_remote_path_calls_borg_with_remote_path_parameters(
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
         remote_path='borg1',
     )
 
 
-def test_check_archives_with_log_json_calls_borg_with_log_json_parameters():
+def test_check_archives_with_log_json_passes_through_to_borg():
     checks = ('repository',)
     check_last = flexmock()
     config = {'check_last': check_last}
@@ -921,11 +1015,14 @@ def test_check_archives_with_log_json_calls_borg_with_log_json_parameters():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=True),
     )
 
 
-def test_check_archives_with_lock_wait_calls_borg_with_lock_wait_parameters():
+def test_check_archives_with_lock_wait_passes_through_to_borg():
     checks = ('repository',)
     check_last = flexmock()
     config = {'lock_wait': 5, 'check_last': check_last}
@@ -947,6 +1044,9 @@ def test_check_archives_with_lock_wait_calls_borg_with_lock_wait_parameters():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
     )
 
@@ -974,11 +1074,14 @@ def test_check_archives_with_retention_prefix():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
         global_arguments=flexmock(log_json=False),
     )
 
 
-def test_check_archives_with_extra_borg_options_calls_borg_with_extra_options():
+def test_check_archives_with_extra_borg_options_passes_through_to_borg():
     checks = ('repository',)
     config = {'check_last': None, 'extra_borg_options': {'check': '--extra --options'}}
     flexmock(module.rinfo).should_receive('display_repository_info').and_return(
@@ -999,5 +1102,42 @@ def test_check_archives_with_extra_borg_options_calls_borg_with_extra_options():
         repository_path='repo',
         config=config,
         local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives=None
+        ),
+        global_arguments=flexmock(log_json=False),
+    )
+
+
+def test_check_archives_with_match_archives_passes_through_to_borg():
+    checks = ('archives',)
+    config = {'check_last': None}
+    flexmock(module.rinfo).should_receive('display_repository_info').and_return(
+        '{"repository": {"id": "repo"}}'
+    )
+    flexmock(module).should_receive('upgrade_check_times')
+    flexmock(module).should_receive('parse_checks')
+    flexmock(module).should_receive('make_archive_filter_flags').and_return(
+        ('--match-archives', 'foo-*')
+    )
+    flexmock(module).should_receive('make_archives_check_id').and_return(None)
+    flexmock(module).should_receive('filter_checks_on_frequency').and_return(checks)
+    flexmock(module).should_receive('make_check_flags').and_return(('--match-archives', 'foo-*'))
+    flexmock(module.flags).should_receive('make_repository_flags').and_return(('repo',))
+    flexmock(module.environment).should_receive('make_environment')
+    flexmock(module).should_receive('execute_command').with_args(
+        ('borg', 'check', '--match-archives', 'foo-*', 'repo'),
+        extra_environment=None,
+    ).once()
+    flexmock(module).should_receive('make_check_time_path')
+    flexmock(module).should_receive('write_check_time')
+
+    module.check_archives(
+        repository_path='repo',
+        config=config,
+        local_borg_version='1.2.3',
+        check_arguments=flexmock(
+            progress=None, repair=None, only_checks=None, force=None, match_archives='foo-*'
+        ),
         global_arguments=flexmock(log_json=False),
     )

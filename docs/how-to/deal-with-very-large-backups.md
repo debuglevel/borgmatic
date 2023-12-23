@@ -51,6 +51,11 @@ cron job), while only running expensive consistency checks with `check` on a
 much less frequent basis (e.g. with `borgmatic check` called from a separate
 cron job).
 
+<span class="minilink minilink-addedin">New in version 1.8.5</span> Instead of
+(or in addition to) specifying actions on the command-line, you can configure
+borgmatic to [skip particular
+actions](https://torsion.org/borgmatic/docs/how-to/set-up-backups/#skipping-actions).
+
 
 ### Consistency check configuration
 
@@ -116,8 +121,17 @@ this option in the `consistency:` section of your configuration.
 
 This tells borgmatic to run the `repository` consistency check at most once
 every two weeks for a given repository and the `archives` check at most once a
-month. The `frequency` value is a number followed by a unit of time, e.g. "3
-days", "1 week", "2 months", etc.
+month. The `frequency` value is a number followed by a unit of time, e.g. `3
+days`, `1 week`, `2 months`, etc. The set of possible time units is as
+follows (singular or plural):
+
+ * `second`
+ * `minute`
+ * `hour`
+ * `day`
+ * `week` (7 days)
+ * `month` (30 days)
+ * `year` (365 days)
 
 The `frequency` defaults to `always` for a check configured without a
 `frequency`, which means run this check every time checks run. But if you omit
@@ -162,7 +176,16 @@ location:
 If that's still too slow, you can disable consistency checks entirely,
 either for a single repository or for all repositories.
 
-Disabling all consistency checks looks like this:
+<span class="minilink minilink-addedin">New in version 1.8.5</span> Disabling
+all consistency checks looks like this:
+
+```yaml
+skip_actions:
+    - check
+```
+
+<span class="minilink minilink-addedin">Prior to version 1.8.5</span> Use this
+configuration instead:
 
 ```yaml
 checks:
@@ -170,10 +193,10 @@ checks:
 ```
 
 <span class="minilink minilink-addedin">Prior to version 1.8.0</span> Put
-this option in the `consistency:` section of your configuration.
+`checks:` in the `consistency:` section of your configuration.
 
-<span class="minilink minilink-addedin">Prior to version 1.6.2</span> `checks`
-was a plain list of strings without the `name:` part. For instance:
+<span class="minilink minilink-addedin">Prior to version 1.6.2</span>
+`checks:` was a plain list of strings without the `name:` part. For instance:
 
 ```yaml
 checks:

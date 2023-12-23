@@ -216,7 +216,7 @@ properties:
             Store configuration files used to create a backup in the backup
             itself. Defaults to true. Changing this to false prevents "borgmatic
             bootstrap" from extracting configuration files from the backup.
-        example: true
+        example: false
     source_directories_must_exist:
         type: boolean
         description: |
@@ -287,14 +287,17 @@ properties:
     retry_wait:
         type: integer
         description: |
-            Wait time between retries (in seconds) to allow transient issues to
-            pass. Increases after each retry as a form of backoff. Defaults to 0
-            (no wait).
+            Wait time between retries (in seconds) to allow transient issues
+            to pass. Increases after each retry by that same wait time as a
+            form of backoff. Defaults to 0 (no wait).
         example: 10
     temporary_directory:
         type: string
         description: |
-            Directory where temporary files are stored. Defaults to $TMPDIR.
+            Directory where temporary Borg files are stored. Defaults to
+            $TMPDIR. See "Resource Usage" at
+            https://borgbackup.readthedocs.io/en/stable/usage/general.html for
+            details.
         example: /path/to/tmpdir
     ssh_command:
         type: string
@@ -423,7 +426,9 @@ properties:
             command-line invocation.
     keep_within:
         type: string
-        description: Keep all archives within this time interval.
+        description: |
+            Keep all archives within this time interval. See "skip_actions" for
+            disabling pruning altogether.
         example: 3H
     keep_secondly:
         type: integer
@@ -479,13 +484,13 @@ properties:
                         - disabled
                     description: |
                         Name of consistency check to run: "repository",
-                        "archives", "data", and/or "extract". Set to "disabled"
-                        to disable all consistency checks. "repository" checks
-                        the consistency of the repository, "archives" checks all
-                        of the archives, "data" verifies the integrity of the
-                        data within the archives, and "extract" does an
-                        extraction dry-run of the most recent archive. Note that
-                        "data" implies "archives".
+                        "archives", "data", and/or "extract". "repository"
+                        checks the consistency of the repository, "archives"
+                        checks all of the archives, "data" verifies the
+                        integrity of the data within the archives, and "extract"
+                        does an extraction dry-run of the most recent archive.
+                        Note that "data" implies "archives". See "skip_actions"
+                        for disabling checks altogether.
                     example: repository
                 frequency:
                     type: string
@@ -525,6 +530,18 @@ properties:
             Apply color to console output. Can be overridden with --no-color
             command-line flag. Defaults to true.
         example: false
+    skip_actions:
+        type: array
+        items:
+            type: string
+        description: |
+            List of one or more actions to skip running for this configuration
+            file, even if specified on the command-line (explicitly or
+            implicitly). This is handy for append-only configurations where you
+            never want to run "compact" or checkless configuration where you
+            want to skip "check". Defaults to not skipping any actions.
+        example:
+          - compact
     before_actions:
         type: array
         items:
@@ -1493,7 +1510,7 @@ properties:
                     ends, or errors.
                 example: https://cronhub.io/ping/1f5e3410-254c-5587
         description: |
-            Configuration for a monitoring integration with Crunhub. Create an
+            Configuration for a monitoring integration with Cronhub. Create an
             account at https://cronhub.io if you'd like to use this service. See
             borgmatic monitoring documentation for details.
     loki:
