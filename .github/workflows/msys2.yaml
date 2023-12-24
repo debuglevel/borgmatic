@@ -35,13 +35,13 @@ jobs:
       - name: mkdir /tmp/borg
         run: mkdir /tmp/borg
       # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
-      - name: Generate borgmatic config
+      - name: Generate borgmatic configuration
         run: borgmatic config generate --destination /tmp/borg/borgmatic.yaml
       - name: ls -alR /tmp/borg
         run: ls -alR /tmp/borg
-      - name: Show borgmatic config
+      - name: Show borgmatic configuration
         run: cat /tmp/borg/borgmatic.yaml
-      - name: Validate borgmatic config
+      - name: Validate borgmatic configuration
         run: borgmatic config validate --config /tmp/borg/borgmatic.yaml
 
       # Install borg (only after borgmatic, so we fail faster)
@@ -54,7 +54,7 @@ jobs:
 
       # Test borgmatic
       # This code should be the same in both jobs.
-      - name: Edit config
+      - name: Edit borgmatic configuration
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
           sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
@@ -112,13 +112,13 @@ jobs:
       - name: mkdir /tmp/borg
         run: mkdir /tmp/borg
       # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
-      - name: Generate borgmatic config
+      - name: Generate borgmatic configuration
         run: borgmatic config generate --destination /tmp/borg/borgmatic.yaml
       - name: ls -alR /tmp/borg
         run: ls -alR /tmp/borg
-      - name: Show borgmatic config
+      - name: Show borgmatic configuration
         run: cat /tmp/borg/borgmatic.yaml
-      - name: Validate borgmatic config
+      - name: Validate borgmatic configuration
         run: borgmatic config validate --config /tmp/borg/borgmatic.yaml
 
       # Install borg (only after borgmatic, so we fail faster)
@@ -130,7 +130,7 @@ jobs:
 
       # Test borgmatic
       # This code should be the same in both jobs.
-      - name: Edit config
+      - name: Edit borgmatic configuration
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
           sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
@@ -156,4 +156,3 @@ jobs:
         run: borgmatic list --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic rlist
         run: borgmatic rlist --config /tmp/borg/borgmatic.yaml --verbosity 2
-
