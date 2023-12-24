@@ -144,6 +144,7 @@ jobs:
           mkdir -p /tmp/backup
           ls -alR /tmp/backup
 
+      # TODO: This does not work yet, as the Windows borg somehow translates /tmp/backup to D:/tmp/backup which fails.
       - name: borgmatic init
         run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey --verbosity 2
       - name: borgmatic create
