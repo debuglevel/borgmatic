@@ -69,17 +69,17 @@ jobs:
           ls -alR /tmp/backup
 
       - name: borgmatic init
-        run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey
+        run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey --verbosity 2
       - name: borgmatic create
-        run: borgmatic create --config /tmp/borg/borgmatic.yaml
+        run: borgmatic create --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic info
-        run: borgmatic info --config /tmp/borg/borgmatic.yaml
+        run: borgmatic info --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic rinfo
-        run: borgmatic rinfo --config /tmp/borg/borgmatic.yaml
+        run: borgmatic rinfo --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic list
-        run: borgmatic list --config /tmp/borg/borgmatic.yaml
+        run: borgmatic list --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic rlist
-        run: borgmatic rlist --config /tmp/borg/borgmatic.yaml
+        run: borgmatic rlist --config /tmp/borg/borgmatic.yaml --verbosity 2
 
 
   msys2-ucrt64:
@@ -145,15 +145,15 @@ jobs:
           ls -alR /tmp/backup
 
       - name: borgmatic init
-        run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey
+        run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey --verbosity 2
       - name: borgmatic create
-        run: borgmatic create --config /tmp/borg/borgmatic.yaml
+        run: borgmatic create --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic info
-        run: borgmatic info --config /tmp/borg/borgmatic.yaml
+        run: borgmatic info --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic rinfo
-        run: borgmatic rinfo --config /tmp/borg/borgmatic.yaml
+        run: borgmatic rinfo --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic list
-        run: borgmatic list --config /tmp/borg/borgmatic.yaml
+        run: borgmatic list --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic rlist
-        run: borgmatic rlist --config /tmp/borg/borgmatic.yaml
+        run: borgmatic rlist --config /tmp/borg/borgmatic.yaml --verbosity 2
 
