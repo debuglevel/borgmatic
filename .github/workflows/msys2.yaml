@@ -8,9 +8,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          # just fetching 1 commit is not enough for setuptools-scm, so we fetch all
+          # Just fetching 1 commit is not enough for setuptools-scm, so we fetch all
           fetch-depth: 0
 
+      # Setting up Python
+      # This code is different between both jobs.
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
@@ -25,15 +27,14 @@ jobs:
       - name: Print versions
         run: python --version
 
-      # borgmatic
+      # Install borgmatic from this repository
       - name: Install borgmatic
         run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install .
       - name: Show borgmatic version
         run: borgmatic --version
-
       - name: mkdir /tmp/borg
         run: mkdir /tmp/borg
-        # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
+      # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
       - name: Generate borgmatic config
         run: borgmatic config generate --destination /tmp/borg/borgmatic.yaml
       - name: ls -alR /tmp/borg
@@ -43,14 +44,16 @@ jobs:
       - name: Validate borgmatic config
         run: borgmatic config validate --config /tmp/borg/borgmatic.yaml
 
-      # borg
+      # Install borg (only after borgmatic, so we fail faster)
       - name: Install borg
         #run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup==1.2.7
         run: pip install borgbackup==1.2.7
       - name: Show borg version
         run: borg --version
 
-      # test borgmatic
+
+      # Test borgmatic
+      # This code should be the same in both jobs.
       - name: Edit config
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
@@ -87,28 +90,28 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          # just fetching 1 commit is not enough for setuptools-scm, so we fetch all
+          # Just fetching 1 commit is not enough for setuptools-scm, so we fetch all
           fetch-depth: 0
 
+      # Setting up MSYS2 and Python
+      # This code is different between both jobs.
       - uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
           update: true
-
       - name: Install dependencies
         run: pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-{toolchain,python,python-pip}
       - name: Print versions
         run: python --version
 
-      # borgmatic
+      # Install borgmatic from this repository
       - name: Install borgmatic
         run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install .
       - name: Show borgmatic version
         run: borgmatic --version
-
       - name: mkdir /tmp/borg
         run: mkdir /tmp/borg
-        # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
+      # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
       - name: Generate borgmatic config
         run: borgmatic config generate --destination /tmp/borg/borgmatic.yaml
       - name: ls -alR /tmp/borg
@@ -118,13 +121,15 @@ jobs:
       - name: Validate borgmatic config
         run: borgmatic config validate --config /tmp/borg/borgmatic.yaml
 
-      # borg
+      # Install borg (only after borgmatic, so we fail faster)
       - name: Install borg
         run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup==1.2.7
       - name: Show borg version
         run: borg --version
 
-      # test borgmatic
+
+      # Test borgmatic
+      # This code should be the same in both jobs.
       - name: Edit config
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
