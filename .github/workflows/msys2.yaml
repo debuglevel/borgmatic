@@ -115,7 +115,7 @@ jobs:
           msystem: UCRT64
           update: true
       - name: Install dependencies
-        run: pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-{toolchain,python,python-pip}
+        run: pacman -S --needed --noconfirm git python python-pip base-devel gcc openssl-devel pkgconf openssh ssh-pageant
 
 
       - name: Print Python paths
