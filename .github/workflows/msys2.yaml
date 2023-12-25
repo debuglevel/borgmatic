@@ -112,8 +112,8 @@ jobs:
         run: mkdir -p /tmp/backup
       - name: Show repository directory
         run: |
-          ls -alR /tmp/borgmatic
-          du -hs /tmp/borgmatic
+          ls -alR /tmp/backup
+          du -hs /tmp/backup
 
       - name: borgmatic init
         run: borgmatic init --config /tmp/borg/borgmatic.yaml --verbosity 2 --encryption repokey 
@@ -132,5 +132,5 @@ jobs:
 
       - name: Show repository directory
         run: |
-          ls -alR /tmp/borgmatic
-          du -hs /tmp/borgmatic
+          ls -alR /tmp/backup
+          du -hs /tmp/backup
