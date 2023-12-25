@@ -69,7 +69,7 @@ jobs:
         run: python --version
       # NOTE: On Windows, "sys.platform" MUST NOT be "win32", as borg does not support ssh repositories there.
       #       On a working MSYS2 setup, it should print "cygwin".
-      - name: Print Python platform (should be "cygwin")
+      - name: Print Python platform (should be "cygwin" on Windows)
         run: python -c 'import sys; print(sys.platform)'
 
       # Install borgmatic from this repository
