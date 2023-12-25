@@ -7,9 +7,10 @@ jobs:
   test:
     strategy:
       fail-fast: false
+      # We also run everything on Linux so we have a reference setup which should work.
       matrix:
         include:
-          - os: windows-2022
+          - os: windows-latest
             shell: msys2 {0}
           - os: ubuntu-22.04
             shell: bash
