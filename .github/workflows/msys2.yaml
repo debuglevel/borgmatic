@@ -54,8 +54,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y pkg-config build-essential libssl-dev libacl1-dev libxxhash-dev liblz4-dev libzstd-dev
         if: ${{ matrix.os == 'ubuntu-22.04' }}
-      - name: (Windows only) Install dependencies
-        run: pacman --sync --needed --noconfirm tree base-devel gcc openssl-devel pkgconf openssh ssh-pageant
+      - name: (Windows only) Install build dependencies
+        run: pacman --sync --needed --noconfirm git base-devel gcc openssl-devel pkgconf
+        if: ${{ matrix.os == 'windows-latest' }}
+      - name: (Windows only) Install runtime dependencies
+        run: pacman --sync --needed --noconfirm openssh ssh-pageant
         if: ${{ matrix.os == 'windows-latest' }}
 
       # Print space usage
@@ -83,8 +86,6 @@ jobs:
       #       On a working MSYS2 setup, it should print "cygwin".
       - name: Print Python platform (should be "cygwin" on Windows)
         run: python -c 'import sys; print(sys.platform)'
-      #- name: Print filesystem tree
-      #  run: tree -p -u --prune -d -s -h /
 
       # Install borgmatic from this repository
       - name: Install borgmatic
@@ -116,6 +117,15 @@ jobs:
         run: pip install borgbackup==1.2.7
       - name: Print borg version
         run: borg --version
+
+      # Print space usage
+      - name: Print space usage
+        run: df
+
+      # Uninstall build dependencies again in order to reduce space usage
+      - name: (Windows only) Uninstall build dependencies
+        run: pacman -Rs --noconfirm git base-devel gcc openssl-devel pkgconf
+        if: ${{ matrix.os == 'windows-latest' }}
 
       # Print space usage
       - name: Print space usage
