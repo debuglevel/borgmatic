@@ -117,7 +117,7 @@ jobs:
       - name: Create source files
         run: |
           mkdir -p /tmp/source
-          dd if=/dev/urandom of=/tmp/source/test.img bs=1M count 10
+          dd if=/dev/urandom of=/tmp/source/test.img bs=1M count=10
       - name: Create repository directory
         run: mkdir -p /tmp/backup
       - name: Show repository directory
