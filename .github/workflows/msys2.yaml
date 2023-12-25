@@ -103,6 +103,7 @@ jobs:
 
       # Test borgmatic
       - name: Edit borgmatic configuration
+        # TODO: Does not work yet
         run: |
           sed -i '/backupserver/d' /tmp/borgmatic/borgmatic.yaml
           sed -i '/sourcehostname.borg/d' /tmp/borgmatic/borgmatic.yaml
@@ -118,7 +119,7 @@ jobs:
         run: cat /tmp/borgmatic/borgmatic.yaml
       - name: Validate borgmatic configuration
         run: borgmatic config validate --config /tmp/borgmatic/borgmatic.yaml
-        
+
       - name: Create source files
         run: |
           mkdir -p /tmp/source
@@ -128,7 +129,7 @@ jobs:
       - name: Show repository directory
         run: |
           ls -alR /tmp/backup
-          du -hs /tmp/backup
+          du -s /tmp/backup
 
       - name: borgmatic init
         run: borgmatic init --config /tmp/borgmatic/borgmatic.yaml --verbosity 2 --encryption repokey 
@@ -148,4 +149,4 @@ jobs:
       - name: Show repository directory
         run: |
           ls -alR /tmp/backup
-          du -hs /tmp/backup
+          du -s /tmp/backup
