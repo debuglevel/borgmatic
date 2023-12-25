@@ -1,13 +1,15 @@
 name: MSYS2 CI
-on: [push, pull_request]
+on: 
+  - push
+  - pull_request
 
 jobs:
-  example_matrix:
+  test:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - os: windows-2022
             shell: msys2 {0}
           - os: ubuntu-22.04
             shell: bash
@@ -17,39 +19,46 @@ jobs:
         shell: ${{ matrix.shell }}
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v3
+      - name: Check out repository
+        uses: actions/checkout@v3
         with:
           # Just fetching 1 commit is not enough for setuptools-scm, so we fetch all
           fetch-depth: 0
 
-      # Setting up Python
-      # This code is different between both jobs.
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-        if: ${{ matrix.os == 'ubuntu-22.04' }}
-      - name: Install Linux packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y pkg-config build-essential
-          sudo apt-get install -y libssl-dev libacl1-dev libxxhash-dev liblz4-dev libzstd-dev
-        if: ${{ matrix.os == 'ubuntu-22.04' }}
-      # Setting up MSYS2 and Python
-      # This code is different between both jobs.
-      - uses: msys2/setup-msys2@v2
+      # Windows: Set up MSYS2
+      - name: (Windows only) Set up MSYS2
+        uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
           update: true
         if: ${{ matrix.os == 'windows-latest' }}
-      - name: Install dependencies
-        run: pacman -S --needed --noconfirm git python python-pip base-devel gcc openssl-devel pkgconf openssh ssh-pageant
+
+      # Set up Python
+      - name: (Linux only) Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
+      - name: (Windows only) Set up Python
+        run: pacman --sync --needed --noconfirm python python-pip
         if: ${{ matrix.os == 'windows-latest' }}
 
+      # Install "borg via pip" dependencies
+      - name: (Linux only) Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config build-essential libssl-dev libacl1-dev libxxhash-dev liblz4-dev libzstd-dev
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
+      - name: (Windows only) Install dependencies
+        run: pacman --sync --needed --noconfirm base-devel gcc openssl-devel pkgconf openssh ssh-pageant
+        if: ${{ matrix.os == 'windows-latest' }}
+
+      # Install "borg via pip" Python dependencies
       - name: Install Python requirements
         run: python -m pip install --upgrade pip setuptools wheel
 
-      - name: Print Python paths
+      # Debug output
+      - name: Print Python executable paths
         run: |
           which python
           which python3
@@ -57,38 +66,39 @@ jobs:
           which pip3
       - name: Print Python version
         run: python --version
-      # `sys.platform` MUST NOT be "win32" as borg does not support ssh repositories there.
-      # On a working MSYS2 setup, it should print "cygwin".
-      - name: Print Python platform
+      # NOTE: On Windows, "sys.platform" MUST NOT be "win32", as borg does not support ssh repositories there.
+      #       On a working MSYS2 setup, it should print "cygwin".
+      - name: Print Python platform (should be "cygwin")
         run: python -c 'import sys; print(sys.platform)'
 
       # Install borgmatic from this repository
       - name: Install borgmatic
         run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install .
-      - name: Show borgmatic version
+      - name: Print borgmatic version
         run: borgmatic --version
-      - name: mkdir /tmp/borg
-        run: mkdir /tmp/borg
-      # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
+
+      # Generate default borgmatic configuration
+      - name: Create borgmatic configuration directory
+        run: mkdir /tmp/borgmatic
+      # NOTE: Without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
+      #       This might be due to some weird path translation stuff which happens if platform is not "cygwin".
       - name: Generate borgmatic configuration
-        run: borgmatic config generate --destination /tmp/borg/borgmatic.yaml
-      - name: ls -alR /tmp/borg
-        run: ls -alR /tmp/borg
-      - name: Show borgmatic configuration
-        run: cat /tmp/borg/borgmatic.yaml
+        run: borgmatic config generate --destination /tmp/borgmatic/borgmatic.yaml
+      - name: Show borgmatic configuration directory
+        run: ls -alR /tmp/borgmatic
+      - name: Print borgmatic configuration
+        run: cat /tmp/borgmatic/borgmatic.yaml
       - name: Validate borgmatic configuration
-        run: borgmatic config validate --config /tmp/borg/borgmatic.yaml
+        run: borgmatic config validate --config /tmp/borgmatic/borgmatic.yaml
 
       # Install borg (only after borgmatic, so we fail faster)
       - name: Install borg
-        #run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup==1.2.7
+        #run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup==1.2.7  # No idea why we do not need SETUPTOOLS_USE_DISTUTILS=stdlib or when we would need it.
         run: pip install borgbackup==1.2.7
-      - name: Show borg version
+      - name: Print borg version
         run: borg --version
 
-
       # Test borgmatic
-      # This code should be the same in both jobs.
       - name: Edit borgmatic configuration
         run: |
           sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
@@ -99,19 +109,28 @@ jobs:
           echo "encryption_passphrase: PASS" >> /tmp/borg/borgmatic.yaml
           cat /tmp/borg/borgmatic.yaml
       - name: Create repository directory
+        run: mkdir -p /tmp/backup
+      - name: Show repository directory
         run: |
-          mkdir -p /tmp/backup
-          ls -alR /tmp/backup
+          ls -alR /tmp/borgmatic
+          du -hs /tmp/borgmatic
 
       - name: borgmatic init
-        run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey --verbosity 2
+        run: borgmatic init --config /tmp/borg/borgmatic.yaml --verbosity 2 --encryption repokey 
       - name: borgmatic create
         run: borgmatic create --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic info
         run: borgmatic info --config /tmp/borg/borgmatic.yaml --verbosity 2
-      - name: borgmatic rinfo
-        run: borgmatic rinfo --config /tmp/borg/borgmatic.yaml --verbosity 2
+      # NOTE: info and rinfo is the same for borgmatic on borg 1.2
+      #- name: borgmatic rinfo
+      #  run: borgmatic rinfo --config /tmp/borg/borgmatic.yaml --verbosity 2
       - name: borgmatic list
         run: borgmatic list --config /tmp/borg/borgmatic.yaml --verbosity 2
-      - name: borgmatic rlist
-        run: borgmatic rlist --config /tmp/borg/borgmatic.yaml --verbosity 2
+      # NOTE: info and rinfo is the same for borgmatic on borg 1.2
+      #- name: borgmatic rlist
+      #  run: borgmatic rlist --config /tmp/borg/borgmatic.yaml --verbosity 2
+
+      - name: Show repository directory
+        run: |
+          ls -alR /tmp/borgmatic
+          du -hs /tmp/borgmatic
