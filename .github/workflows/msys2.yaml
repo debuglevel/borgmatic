@@ -71,6 +71,8 @@ jobs:
       #       On a working MSYS2 setup, it should print "cygwin".
       - name: Print Python platform (should be "cygwin" on Windows)
         run: python -c 'import sys; print(sys.platform)'
+      - name: Print filesystem tree
+        run: tree -p -u --prune -d -s -h
 
       # Install borgmatic from this repository
       - name: Install borgmatic
