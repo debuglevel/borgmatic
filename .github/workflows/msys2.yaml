@@ -51,7 +51,7 @@ jobs:
           sudo apt-get install -y pkg-config build-essential libssl-dev libacl1-dev libxxhash-dev liblz4-dev libzstd-dev
         if: ${{ matrix.os == 'ubuntu-22.04' }}
       - name: (Windows only) Install dependencies
-        run: pacman --sync --needed --noconfirm base-devel gcc openssl-devel pkgconf openssh ssh-pageant
+        run: pacman --sync --needed --noconfirm tree base-devel gcc openssl-devel pkgconf openssh ssh-pageant
         if: ${{ matrix.os == 'windows-latest' }}
 
       # Install "borg via pip" Python dependencies
@@ -72,7 +72,7 @@ jobs:
       - name: Print Python platform (should be "cygwin" on Windows)
         run: python -c 'import sys; print(sys.platform)'
       - name: Print filesystem tree
-        run: tree -p -u --prune -d -s -h
+        run: tree -p -u --prune -d -s -h /
 
       # Install borgmatic from this repository
       - name: Install borgmatic
@@ -106,11 +106,18 @@ jobs:
         run: |
           sed -i '/backupserver/d' /tmp/borgmatic/borgmatic.yaml
           sed -i '/sourcehostname.borg/d' /tmp/borgmatic/borgmatic.yaml
-          sed -i '#- /home#d' /tmp/borgmatic/borgmatic.yaml
-          sed -i '#- /var/log/syslog#d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#    - /home#    - /tmp/source##' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#    - /home#d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#    - /etc#d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#    - /var/log/syslog#d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#    - /home/user/path with spaces#d' /tmp/borgmatic/borgmatic.yaml
           sed -i 's#/mnt/backup#/tmp/backup##' /tmp/borgmatic/borgmatic.yaml
           echo "encryption_passphrase: PASS" >> /tmp/borgmatic/borgmatic.yaml
           cat /tmp/borgmatic/borgmatic.yaml
+      - name: Create source files
+        run: |
+          mkdir -p /tmp/source
+          dd if=/dev/urandom of=/tmp/source/test.img bs=1M count 10
       - name: Create repository directory
         run: mkdir -p /tmp/backup
       - name: Show repository directory
