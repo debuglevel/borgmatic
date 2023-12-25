@@ -12,6 +12,22 @@ jobs:
         include:
           - os: windows-latest
             shell: msys2 {0}
+            msystem: ucrt64
+          - os: windows-latest
+            shell: msys2 {0}
+            msystem: clang32
+          - os: windows-latest
+            shell: msys2 {0}
+            msystem: clang64
+          - os: windows-latest
+            shell: msys2 {0}
+            msystem: mingw32
+          - os: windows-latest
+            shell: msys2 {0}
+            msystem: mingw64
+          - os: windows-latest
+            shell: msys2 {0}
+            msystem: msys
           - os: ubuntu-22.04
             shell: bash
     runs-on: ${{ matrix.os }}
@@ -30,7 +46,7 @@ jobs:
       - name: (Windows only) Set up MSYS2
         uses: msys2/setup-msys2@v2
         with:
-          msystem: UCRT64
+          msystem: ${{ matrix.msystem }}
           update: true
         if: ${{ matrix.os == 'windows-latest' }}
 
