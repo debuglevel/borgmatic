@@ -101,13 +101,13 @@ jobs:
       # Test borgmatic
       - name: Edit borgmatic configuration
         run: |
-          sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
-          sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
-          sed -i '#- /home#d' /tmp/borg/borgmatic.yaml
-          sed -i '#- /var/log/syslog#d' /tmp/borg/borgmatic.yaml
-          sed -i 's#/mnt/backup#/tmp/backup##' /tmp/borg/borgmatic.yaml
-          echo "encryption_passphrase: PASS" >> /tmp/borg/borgmatic.yaml
-          cat /tmp/borg/borgmatic.yaml
+          sed -i '/backupserver/d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '/sourcehostname.borg/d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#- /home#d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#- /var/log/syslog#d' /tmp/borgmatic/borgmatic.yaml
+          sed -i 's#/mnt/backup#/tmp/backup##' /tmp/borgmatic/borgmatic.yaml
+          echo "encryption_passphrase: PASS" >> /tmp/borgmatic/borgmatic.yaml
+          cat /tmp/borgmatic/borgmatic.yaml
       - name: Create repository directory
         run: mkdir -p /tmp/backup
       - name: Show repository directory
@@ -116,19 +116,19 @@ jobs:
           du -hs /tmp/backup
 
       - name: borgmatic init
-        run: borgmatic init --config /tmp/borg/borgmatic.yaml --verbosity 2 --encryption repokey 
+        run: borgmatic init --config /tmp/borgmatic/borgmatic.yaml --verbosity 2 --encryption repokey 
       - name: borgmatic create
-        run: borgmatic create --config /tmp/borg/borgmatic.yaml --verbosity 2
+        run: borgmatic create --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
       - name: borgmatic info
-        run: borgmatic info --config /tmp/borg/borgmatic.yaml --verbosity 2
+        run: borgmatic info --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
       # NOTE: info and rinfo is the same for borgmatic on borg 1.2
       #- name: borgmatic rinfo
-      #  run: borgmatic rinfo --config /tmp/borg/borgmatic.yaml --verbosity 2
+      #  run: borgmatic rinfo --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
       - name: borgmatic list
-        run: borgmatic list --config /tmp/borg/borgmatic.yaml --verbosity 2
+        run: borgmatic list --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
       # NOTE: info and rinfo is the same for borgmatic on borg 1.2
       #- name: borgmatic rlist
-      #  run: borgmatic rlist --config /tmp/borg/borgmatic.yaml --verbosity 2
+      #  run: borgmatic rlist --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
 
       - name: Show repository directory
         run: |
