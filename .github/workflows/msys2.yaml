@@ -44,6 +44,10 @@ jobs:
         run: pacman --sync --needed --noconfirm python python-pip
         if: ${{ matrix.os == 'windows-latest' }}
 
+      # Print space usage
+      - name: Print space usage
+        run: du -hs /
+
       # Install "borg via pip" dependencies
       - name: (Linux only) Install dependencies
         run: |
@@ -54,9 +58,17 @@ jobs:
         run: pacman --sync --needed --noconfirm tree base-devel gcc openssl-devel pkgconf openssh ssh-pageant
         if: ${{ matrix.os == 'windows-latest' }}
 
+      # Print space usage
+      - name: Print space usage
+        run: du -hs /
+
       # Install "borg via pip" Python dependencies
       - name: Install Python requirements
         run: python -m pip install --upgrade pip setuptools wheel
+
+      # Print space usage
+      - name: Print space usage
+        run: du -hs /
 
       # Debug output
       - name: Print Python executable paths
@@ -80,6 +92,10 @@ jobs:
       - name: Print borgmatic version
         run: borgmatic --version
 
+      # Print space usage
+      - name: Print space usage
+        run: du -hs /
+
       # Generate default borgmatic configuration
       - name: Create borgmatic configuration directory
         run: mkdir /tmp/borgmatic
@@ -100,6 +116,10 @@ jobs:
         run: pip install borgbackup==1.2.7
       - name: Print borg version
         run: borg --version
+
+      # Print space usage
+      - name: Print space usage
+        run: du -hs /
 
       # Test borgmatic
       - name: Edit borgmatic configuration
