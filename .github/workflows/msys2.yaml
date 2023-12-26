@@ -169,7 +169,7 @@ jobs:
       - name: Create source files
         run: |
           mkdir -p /tmp/source
-          dd if=/dev/urandom of=/tmp/source/test.img bs=10000000 count=1
+          dd if=/dev/urandom of=/tmp/source/test.img bs=100000000 count=1
       - name: Create repository directory
         run: mkdir -p /tmp/backup
       - name: Show repository directory
@@ -181,6 +181,8 @@ jobs:
         run: borgmatic init --config /tmp/borgmatic/borgmatic.yaml --verbosity 2 --encryption repokey 
       - name: borgmatic create
         run: borgmatic create --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
+      - name: Update source files
+        run: dd if=/dev/urandom of=/tmp/source/test.img bs=100000000 count=1
       - name: borgmatic info
         run: borgmatic info --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
       # NOTE: info and rinfo is the same for borgmatic on borg 1.2
