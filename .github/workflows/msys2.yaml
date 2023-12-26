@@ -183,6 +183,8 @@ jobs:
         run: borgmatic create --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
       - name: Update source files
         run: dd if=/dev/urandom of=/tmp/source/test.img bs=100000000 count=1
+      - name: borgmatic create
+        run: borgmatic create --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
       - name: borgmatic info
         run: borgmatic info --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
       # NOTE: info and rinfo is the same for borgmatic on borg 1.2
