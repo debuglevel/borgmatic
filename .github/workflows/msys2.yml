@@ -1,0 +1,163 @@
+name: MSYS2 CI
+on:
+  - push
+  - pull_request
+
+jobs:
+
+  linux:
+    timeout-minutes: 15
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # Just fetching 1 commit is not enough for setuptools-scm, so we fetch all
+          fetch-depth: 0
+
+      # Setting up Python
+      # This code is different between both jobs.
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Linux packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config build-essential
+          sudo apt-get install -y libssl-dev libacl1-dev libxxhash-dev liblz4-dev libzstd-dev
+      - name: Install Python requirements
+        run: python -m pip install --upgrade pip setuptools wheel
+      - name: Print versions
+        run: python --version
+
+      # Install borgmatic from this repository
+      - name: Install borgmatic
+        run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install .
+      - name: Show borgmatic version
+        run: borgmatic --version
+      - name: mkdir /tmp/borg
+        run: mkdir /tmp/borg
+      # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
+      - name: Generate borgmatic configuration
+        run: borgmatic config generate --destination /tmp/borg/borgmatic.yaml
+      - name: ls -alR /tmp/borg
+        run: ls -alR /tmp/borg
+      - name: Show borgmatic configuration
+        run: cat /tmp/borg/borgmatic.yaml
+      - name: Validate borgmatic configuration
+        run: borgmatic config validate --config /tmp/borg/borgmatic.yaml
+
+      # Install borg (only after borgmatic, so we fail faster)
+      - name: Install borg
+        #run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup==1.2.7
+        run: pip install borgbackup==1.2.7
+      - name: Show borg version
+        run: borg --version
+
+
+      # Test borgmatic
+      # This code should be the same in both jobs.
+      - name: Edit borgmatic configuration
+        run: |
+          sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
+          sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
+          sed -i '#- /home#d' /tmp/borg/borgmatic.yaml
+          sed -i '#- /var/log/syslog#d' /tmp/borg/borgmatic.yaml
+          sed -i 's#/mnt/backup#/tmp/backup##' /tmp/borg/borgmatic.yaml
+          echo "encryption_passphrase: PASS" >> /tmp/borg/borgmatic.yaml
+          cat /tmp/borg/borgmatic.yaml
+      - name: Create repository directory
+        run: |
+          mkdir -p /tmp/backup
+          ls -alR /tmp/backup
+
+      - name: borgmatic init
+        run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey --verbosity 2
+      - name: borgmatic create
+        run: borgmatic create --config /tmp/borg/borgmatic.yaml --verbosity 2
+      - name: borgmatic info
+        run: borgmatic info --config /tmp/borg/borgmatic.yaml --verbosity 2
+      - name: borgmatic rinfo
+        run: borgmatic rinfo --config /tmp/borg/borgmatic.yaml --verbosity 2
+      - name: borgmatic list
+        run: borgmatic list --config /tmp/borg/borgmatic.yaml --verbosity 2
+      - name: borgmatic rlist
+        run: borgmatic rlist --config /tmp/borg/borgmatic.yaml --verbosity 2
+
+
+  msys2-ucrt64:
+    timeout-minutes: 15
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # Just fetching 1 commit is not enough for setuptools-scm, so we fetch all
+          fetch-depth: 0
+
+      # Setting up MSYS2 and Python
+      # This code is different between both jobs.
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+      - name: Install dependencies
+        run: pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-{toolchain,python,python-pip}
+      - name: Print versions
+        run: python --version
+
+      # Install borgmatic from this repository
+      - name: Install borgmatic
+        run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install .
+      - name: Show borgmatic version
+        run: borgmatic --version
+      - name: mkdir /tmp/borg
+        run: mkdir /tmp/borg
+      # NOTE: without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
+      - name: Generate borgmatic configuration
+        run: borgmatic config generate --destination /tmp/borg/borgmatic.yaml
+      - name: ls -alR /tmp/borg
+        run: ls -alR /tmp/borg
+      - name: Show borgmatic configuration
+        run: cat /tmp/borg/borgmatic.yaml
+      - name: Validate borgmatic configuration
+        run: borgmatic config validate --config /tmp/borg/borgmatic.yaml
+
+      # Install borg (only after borgmatic, so we fail faster)
+      - name: Install borg
+        run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup==1.2.7
+      - name: Show borg version
+        run: borg --version
+
+
+      # Test borgmatic
+      # This code should be the same in both jobs.
+      - name: Edit borgmatic configuration
+        run: |
+          sed -i '/backupserver/d' /tmp/borg/borgmatic.yaml
+          sed -i '/sourcehostname.borg/d' /tmp/borg/borgmatic.yaml
+          sed -i '#- /home#d' /tmp/borg/borgmatic.yaml
+          sed -i '#- /var/log/syslog#d' /tmp/borg/borgmatic.yaml
+          sed -i 's#/mnt/backup#/tmp/backup##' /tmp/borg/borgmatic.yaml
+          echo "encryption_passphrase: PASS" >> /tmp/borg/borgmatic.yaml
+          cat /tmp/borg/borgmatic.yaml
+      - name: Create repository directory
+        run: |
+          mkdir -p /tmp/backup
+          ls -alR /tmp/backup
+
+      # TODO: This does not work yet, as the Windows borg somehow translates /tmp/backup to D:/tmp/backup which fails.
+      - name: borgmatic init
+        run: borgmatic init --config /tmp/borg/borgmatic.yaml --encryption repokey --verbosity 2
+      - name: borgmatic create
+        run: borgmatic create --config /tmp/borg/borgmatic.yaml --verbosity 2
+      - name: borgmatic info
+        run: borgmatic info --config /tmp/borg/borgmatic.yaml --verbosity 2
+      - name: borgmatic rinfo
+        run: borgmatic rinfo --config /tmp/borg/borgmatic.yaml --verbosity 2
+      - name: borgmatic list
+        run: borgmatic list --config /tmp/borg/borgmatic.yaml --verbosity 2
+      - name: borgmatic rlist
+        run: borgmatic rlist --config /tmp/borg/borgmatic.yaml --verbosity 2
