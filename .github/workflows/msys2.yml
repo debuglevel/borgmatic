@@ -1,0 +1,205 @@
+name: MSYS2 CI
+on: 
+  - push
+  - pull_request
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      # We also run everything on Linux so we have a reference setup which should work.
+      matrix:
+        include:
+          # Try everything on Linux as a reference.
+          - os: ubuntu-22.04
+            shell: bash
+          - os: windows-latest
+            shell: msys2 {0}
+            msystem: msys
+          # Different msystems do not matter if no prefixed packages are installed.
+          # The default system without package-prefixes is the cygwin-like "msys".
+          # - os: windows-latest
+          #   shell: msys2 {0}
+          #   msystem: ucrt64
+          # - os: windows-latest
+          #   shell: msys2 {0}
+          #   msystem: clang32
+          # - os: windows-latest
+          #   shell: msys2 {0}
+          #   msystem: clang64
+          # - os: windows-latest
+          #   shell: msys2 {0}
+          #   msystem: mingw32
+          # - os: windows-latest
+          #   shell: msys2 {0}
+          #   msystem: mingw64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          # Just fetching 1 commit is not enough for setuptools-scm, so we fetch all
+          fetch-depth: 0
+
+      # Windows: Set up MSYS2
+      - name: (Windows only) Set up MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          update: true
+        if: ${{ matrix.os == 'windows-latest' }}
+
+      # Set up Python
+      - name: (Linux only) Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
+      - name: (Windows only) Set up Python
+        run: pacman --sync --needed --noconfirm python python-pip
+        if: ${{ matrix.os == 'windows-latest' }}
+
+      # Print space usage
+      - name: Print space usage
+        run: df
+
+      # Install "borg via pip" dependencies
+      - name: (Linux only) Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config build-essential libssl-dev libacl1-dev libxxhash-dev liblz4-dev libzstd-dev
+        if: ${{ matrix.os == 'ubuntu-22.04' }}
+      - name: (Windows only) Install build dependencies
+        run: pacman --sync --needed --noconfirm git base-devel gcc openssl-devel pkgconf
+        if: ${{ matrix.os == 'windows-latest' }}
+      - name: (Windows only) Install runtime dependencies
+        run: pacman --sync --needed --noconfirm openssh ssh-pageant
+        if: ${{ matrix.os == 'windows-latest' }}
+
+      # Print space usage
+      - name: Print space usage
+        run: df
+
+      # Install "borg via pip" Python dependencies
+      - name: Install Python requirements
+        run: python -m pip install --upgrade pip setuptools wheel
+
+      # Print space usage
+      - name: Print space usage
+        run: df
+
+      # Debug output
+      - name: Print Python executable paths
+        run: |
+          which python
+          which python3
+          which pip
+          which pip3
+      - name: Print Python version
+        run: python --version
+      # NOTE: On Windows, "sys.platform" MUST NOT be "win32", as borg does not support ssh repositories there.
+      #       On a working MSYS2 setup, it should print "cygwin".
+      - name: Print Python platform (should be "cygwin" on Windows)
+        run: 'python -c ''import sys; print(sys.platform); sys.exit(not (sys.platform == "cygwin" or sys.platform == "linux"))'' ; echo $?'
+
+      # Install borgmatic from this repository
+      - name: Install borgmatic
+        run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install .
+      - name: Print borgmatic version
+        run: borgmatic --version
+
+      # Print space usage
+      - name: Print space usage
+        run: df
+
+      # Generate default borgmatic configuration
+      - name: Create borgmatic configuration directory
+        run: mkdir /tmp/borgmatic
+      # NOTE: Without --destination, the command succeeds, but somehow there is no /etc/borgmatic/config.yaml
+      #       This might be due to some weird path translation stuff which happens if platform is not "cygwin".
+      - name: Generate borgmatic configuration
+        run: borgmatic config generate --destination /tmp/borgmatic/borgmatic.yaml
+      - name: Show borgmatic configuration directory
+        run: ls -alR /tmp/borgmatic
+      - name: Print borgmatic configuration
+        run: cat /tmp/borgmatic/borgmatic.yaml
+      - name: Validate borgmatic configuration
+        run: borgmatic config validate --config /tmp/borgmatic/borgmatic.yaml
+
+      # Install borg (only after borgmatic, so we fail faster)
+      - name: Install borg
+        #run: SETUPTOOLS_USE_DISTUTILS=stdlib pip install borgbackup==1.2.7  # No idea why we do not need SETUPTOOLS_USE_DISTUTILS=stdlib or when we would need it.
+        run: pip install borgbackup==1.2.7
+      - name: Print borg version
+        run: borg --version
+
+      # Print space usage
+      - name: Print space usage
+        run: df
+
+      # Uninstall build dependencies again in order to reduce space usage
+      - name: (Windows only) Uninstall build dependencies
+        run: pacman -Rs --noconfirm git base-devel gcc openssl-devel pkgconf
+        if: ${{ matrix.os == 'windows-latest' }}
+
+      # Print space usage
+      - name: Print space usage
+        run: df
+
+      # Test borgmatic
+      - name: Edit borgmatic configuration
+        # TODO: Does not work yet
+        run: |
+          sed -i '/backupserver/d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '/sourcehostname.borg/d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#    - /home#    - /tmp/source##' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#    - /home#d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#    - /etc#d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#    - /var/log/syslog#d' /tmp/borgmatic/borgmatic.yaml
+          sed -i '#    - /home/user/path with spaces#d' /tmp/borgmatic/borgmatic.yaml
+          sed -i 's#/mnt/backup#/tmp/backup##' /tmp/borgmatic/borgmatic.yaml
+          echo "encryption_passphrase: PASS" >> /tmp/borgmatic/borgmatic.yaml
+          cat /tmp/borgmatic/borgmatic.yaml
+      - name: Print borgmatic configuration
+        run: cat /tmp/borgmatic/borgmatic.yaml
+      - name: Validate borgmatic configuration
+        run: borgmatic config validate --config /tmp/borgmatic/borgmatic.yaml
+
+      - name: Create source files
+        run: |
+          mkdir -p /tmp/source
+          dd if=/dev/urandom of=/tmp/source/test.img bs=100000000 count=1
+      - name: Create repository directory
+        run: mkdir -p /tmp/backup
+      - name: Show repository directory
+        run: |
+          ls -alR /tmp/backup
+          du -s /tmp/backup
+
+      - name: borgmatic init
+        run: borgmatic init --config /tmp/borgmatic/borgmatic.yaml --verbosity 2 --encryption repokey 
+      - name: borgmatic create
+        run: borgmatic create --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
+      - name: Update source files
+        run: dd if=/dev/urandom of=/tmp/source/test.img bs=100000000 count=1
+      - name: borgmatic create
+        run: borgmatic create --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
+      - name: borgmatic info
+        run: borgmatic info --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
+      # NOTE: info and rinfo is the same for borgmatic on borg 1.2
+      #- name: borgmatic rinfo
+      #  run: borgmatic rinfo --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
+      - name: borgmatic list
+        run: borgmatic list --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
+      # NOTE: info and rinfo is the same for borgmatic on borg 1.2
+      #- name: borgmatic rlist
+      #  run: borgmatic rlist --config /tmp/borgmatic/borgmatic.yaml --verbosity 2
+
+      - name: Show repository directory
+        run: |
+          ls -alR /tmp/backup
+          du -s /tmp/backup
